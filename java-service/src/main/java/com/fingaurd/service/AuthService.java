@@ -5,6 +5,7 @@ import com.fingaurd.dto.response.AuthResponse;
 import com.fingaurd.dto.response.UserResponse;
 import com.fingaurd.exception.ValidationException;
 import com.fingaurd.model.User;
+import com.fingaurd.repository.UserRepository;
 import com.fingaurd.security.JwtTokenProvider;
 import com.fingaurd.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +16,12 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Service for authentication operations including refresh tokens and account lockout
+ * Service for authentication operations including refresh tokens and account lockout.
  */
 @Service
 @RequiredArgsConstructor
@@ -31,6 +31,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final UserService userService;
+    private final UserRepository userRepository;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
@@ -41,26 +42,30 @@ public class AuthService {
     /**
      * Authenticate user, enforce lockout, return access + refresh tokens
      */
-    @Transactional
     public AuthResponse authenticateUser(LoginRequest request) {
         log.info("Authenticating user with email: {}", request.getEmail());
 
-        // Pre-check: is the account locked?
+        // Find user first (throws if not found)
         User user = userService.findByEmail(request.getEmail());
-        checkAccountLockout(user);
+
+        // Check if account is locked
+        if (user.getAccountLockedUntil() != null
+                && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
+            log.warn("Account is locked for user: {} until {}", user.getEmail(), user.getAccountLockedUntil());
+            throw new BadCredentialsException(
+                    "Account is locked due to too many failed login attempts. Try again after "
+                            + user.getAccountLockedUntil());
+        }
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
-            // Reset failed attempts on success
-            resetFailedAttempts(user);
+            // Success: reset failed attempts
+            userRepository.resetFailedLoginAttempts(user.getId());
 
             // Update last login
             userService.updateLastLogin(userPrincipal.getId());
@@ -69,26 +74,35 @@ public class AuthService {
             String accessToken = tokenProvider.generateToken(userPrincipal.getId(), userPrincipal.getEmail());
             String refreshToken = tokenProvider.generateRefreshToken(userPrincipal.getId(), userPrincipal.getEmail());
 
+            // Re-read user to get updated lastLogin
+            user = userService.findById(userPrincipal.getId());
             UserResponse userResponse = UserResponse.from(user);
-            log.info("User authenticated successfully: {}", userPrincipal.getEmail());
 
+            log.info("User authenticated successfully: {}", userPrincipal.getEmail());
             return AuthResponse.create(accessToken, refreshToken, jwtExpiration / 1000, userResponse);
 
         } catch (BadCredentialsException e) {
-            recordFailedAttempt(user);
-            log.warn("Authentication failed for email: {} (attempt {})",
-                    request.getEmail(), user.getFailedLoginAttempts());
+            // Record the failed attempt (runs in its own @Transactional, won't rollback)
+            userRepository.incrementFailedLoginAttempts(user.getId());
+
+            int newCount = (user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0) + 1;
+            if (newCount >= MAX_FAILED_ATTEMPTS) {
+                LocalDateTime lockedUntil = LocalDateTime.now().plusMinutes(LOCKOUT_MINUTES);
+                userRepository.lockAccount(user.getId(), lockedUntil);
+                log.warn("Account locked for user {} after {} failed attempts until {}",
+                        user.getEmail(), newCount, lockedUntil);
+                throw new BadCredentialsException(
+                        "Account locked due to too many failed attempts. Try again after " + lockedUntil);
+            }
+
+            log.warn("Authentication failed for email: {} (attempt {})", request.getEmail(), newCount);
             throw new BadCredentialsException("Invalid email or password");
-        } catch (Exception e) {
-            log.error("Authentication error for email: {}", request.getEmail(), e);
-            throw new BadCredentialsException("Authentication failed");
         }
     }
 
     /**
-     * Issue a new access token from a valid refresh token
+     * Issue new access token from a valid refresh token
      */
-    @Transactional
     public AuthResponse refreshAccessToken(String refreshToken) {
         if (!tokenProvider.validateToken(refreshToken)) {
             throw new ValidationException("Invalid or expired refresh token");
@@ -107,39 +121,6 @@ public class AuthService {
         String newRefreshToken = tokenProvider.generateRefreshToken(userId, email);
 
         log.info("Access token refreshed for user: {}", email);
-
         return AuthResponse.create(newAccessToken, newRefreshToken, jwtExpiration / 1000, userResponse);
-    }
-
-    // ── Lockout helpers ────────────────────────────────────────────
-
-    private void checkAccountLockout(User user) {
-        if (user.getAccountLockedUntil() != null
-                && user.getAccountLockedUntil().isAfter(LocalDateTime.now())) {
-            log.warn("Account is locked for user: {} until {}",
-                    user.getEmail(), user.getAccountLockedUntil());
-            throw new BadCredentialsException(
-                    "Account is locked due to too many failed login attempts. Try again after "
-                            + user.getAccountLockedUntil());
-        }
-    }
-
-    private void recordFailedAttempt(User user) {
-        int attempts = (user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0) + 1;
-        user.setFailedLoginAttempts(attempts);
-
-        if (attempts >= MAX_FAILED_ATTEMPTS) {
-            user.setAccountLockedUntil(LocalDateTime.now().plusMinutes(LOCKOUT_MINUTES));
-            log.warn("Account locked for user {} after {} failed attempts",
-                    user.getEmail(), attempts);
-        }
-        // Save is handled by the @Transactional boundary
-    }
-
-    private void resetFailedAttempts(User user) {
-        if (user.getFailedLoginAttempts() != null && user.getFailedLoginAttempts() > 0) {
-            user.setFailedLoginAttempts(0);
-            user.setAccountLockedUntil(null);
-        }
     }
 }

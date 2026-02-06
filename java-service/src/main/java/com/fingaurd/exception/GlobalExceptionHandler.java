@@ -158,14 +158,17 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+        // Preserve the actual message (may include lockout information)
+        String message = ex.getMessage() != null ? ex.getMessage() : "Invalid email or password";
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("Authentication Failed")
-                .message("Invalid email or password")
+                .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
         
-        log.warn("Authentication failed: {}", ex.getMessage());
+        log.warn("Authentication failed: {}", message);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
     
