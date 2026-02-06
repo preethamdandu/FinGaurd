@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { transactions as api } from '../services/api';
 import { Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -36,6 +36,7 @@ export default function Transactions() {
   const [form, setForm] = useState({ amount: '', transactionType: 'EXPENSE', category: 'other', description: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const filterJustChanged = useRef(false);
 
   const load = (p = page) => {
     setLoading(true);
@@ -51,8 +52,18 @@ export default function Transactions() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(0); setPage(0); }, [filterType, filterCat]);
-  useEffect(() => { load(); }, [page]);
+  useEffect(() => {
+    filterJustChanged.current = true;
+    setPage(0);
+  }, [filterType, filterCat]);
+  useEffect(() => {
+    if (filterJustChanged.current) {
+      filterJustChanged.current = false;
+      load(0);
+    } else {
+      load(page);
+    }
+  }, [page, filterType, filterCat]);
 
   const openCreate = () => {
     setEditId(null);

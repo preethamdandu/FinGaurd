@@ -5,12 +5,9 @@ Fraud detection API endpoints
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from decimal import Decimal
-from datetime import datetime
 import logging
 
 from app.schemas.transaction import TransactionAnalysisRequest, TransactionAnalysisResponse
-from app.schemas.fraud import FraudAnalysisResult
 from app.services.fraud_detector import fraud_service
 from app.services.mongodb_client import mongodb_client
 from app.ml.model_manager import model_manager

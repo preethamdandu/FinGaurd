@@ -7,7 +7,7 @@ Implements rule-based and ML-assisted fraud detection for financial transactions
 import logging
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from app.core.config import settings
@@ -172,7 +172,7 @@ class FraudDetectionService:
     ) -> dict:
         """
         Legacy /detect endpoint compatibility.
-        
+
         Accepts the simpler payload the Java service sends and returns
         the format it expects (is_fraudulent, reason, risk_score).
         """

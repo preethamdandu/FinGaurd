@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { users } from '../services/api';
 import { User, Save, CheckCircle } from 'lucide-react';
@@ -6,11 +6,21 @@ import { User, Save, CheckCircle } from 'lucide-react';
 export default function Profile() {
   const { user, setUser } = useAuth();
   const [form, setForm] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    username: user?.username || '',
+    firstName: '',
+    lastName: '',
+    username: '',
   });
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+        username: user.username ?? '',
+      });
+    }
+  }, [user]);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 

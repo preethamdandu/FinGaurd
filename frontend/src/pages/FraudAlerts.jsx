@@ -63,7 +63,7 @@ export default function FraudAlerts() {
                 <div className="flex gap-4 mt-2 text-xs text-gray-400">
                   <span>Category: {tx.category}</span>
                   <span>Date: {new Date(tx.transactionDate).toLocaleDateString()}</span>
-                  <span>ID: {tx.id?.slice(0, 8)}...</span>
+                  <span>ID: {tx.id != null ? String(tx.id).slice(0, 8) : '—'}...</span>
                 </div>
               </div>
             </div>
