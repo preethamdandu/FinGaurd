@@ -20,6 +20,7 @@ import java.util.UUID;
 @Builder
 @EqualsAndHashCode(exclude = {"user"})
 @ToString(exclude = {"user"})
+@org.hibernate.annotations.Where(clause = "is_deleted = false OR is_deleted IS NULL")
 public class Transaction {
     
     @Id
@@ -59,6 +60,13 @@ public class Transaction {
     
     @Column(name = "fraud_risk_score", precision = 5, scale = 4)
     private BigDecimal fraudRiskScore;
+    
+    @Column(name = "is_deleted")
+    @Builder.Default
+    private Boolean isDeleted = false;
+    
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
     
     /**
      * Check if transaction is flagged as fraud

@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * Controller for authentication endpoints
  */
@@ -21,53 +23,51 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
-    
+
     private final UserService userService;
     private final AuthService authService;
-    
+
     /**
      * Register a new user (signup)
      */
     @PostMapping("/signup")
     public ResponseEntity<UserResponse> signup(@Valid @RequestBody UserRegistrationRequest request) {
         log.info("Signup request for email: {}", request.getEmail());
-        
-        try {
-            UserResponse response = userService.registerUser(request);
-            
-            log.info("User registered successfully: {}", response.getEmail());
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            log.error("Error during user signup: {}", e.getMessage());
-            throw e;
-        }
+        UserResponse response = userService.registerUser(request);
+        log.info("User registered successfully: {}", response.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     /**
-     * Login user
+     * Login user – returns access + refresh tokens
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("Login request for email: {}", request.getEmail());
-        
-        try {
-            AuthResponse response = authService.authenticateUser(request);
-            
-            log.info("User logged in successfully: {}", request.getEmail());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error during user login: {}", e.getMessage());
-            throw e;
-        }
+        AuthResponse response = authService.authenticateUser(request);
+        log.info("User logged in successfully: {}", request.getEmail());
+        return ResponseEntity.ok(response);
     }
-    
+
+    /**
+     * Refresh access token using a valid refresh token
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        log.info("Token refresh request received");
+        AuthResponse response = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Logout user (stateless - just return success)
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        // In stateless JWT architecture, logout is handled client-side
-        // by removing the token from storage
         log.info("Logout request received");
         return ResponseEntity.noContent().build();
     }

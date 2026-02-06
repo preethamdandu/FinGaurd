@@ -1,0 +1,248 @@
+{
+  "info": {
+    "name": "FinGaurd API",
+    "_postman_id": "fingaurd-api-collection",
+    "description": "Complete API collection for FinGaurd – Financial Management & Fraud Detection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:8080" },
+    { "key": "FRAUD_URL", "value": "http://localhost:8000" },
+    { "key": "TOKEN", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{BASE_URL}}/api/auth/signup", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status is 201', () => pm.response.to.have.status(201));"] } }]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+            "var json = pm.response.json();",
+            "pm.collectionVariables.set('TOKEN', json.accessToken);",
+            "if (json.refreshToken) pm.collectionVariables.set('REFRESH_TOKEN', json.refreshToken);"
+          ] } }]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{BASE_URL}}/api/auth/refresh", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/auth/logout", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/users/me", "host": ["{{BASE_URL}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{BASE_URL}}/api/users/me", "host": ["{{BASE_URL}}"], "path": ["api", "users", "me"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Create Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{BASE_URL}}/api/transactions", "host": ["{{BASE_URL}}"], "path": ["api", "transactions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150.00,\n  \"transactionType\": \"EXPENSE\",\n  \"category\": \"groceries\",\n  \"description\": \"Weekly shopping\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+            "var json = pm.response.json();",
+            "pm.collectionVariables.set('TRANSACTION_ID', json.id);"
+          ] } }]
+        },
+        {
+          "name": "Create High-Risk Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{BASE_URL}}/api/transactions", "host": ["{{BASE_URL}}"], "path": ["api", "transactions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 25000.00,\n  \"transactionType\": \"EXPENSE\",\n  \"category\": \"Cryptocurrency\",\n  \"description\": \"Urgent bitcoin purchase\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Transactions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions?page=0&size=20", "host": ["{{BASE_URL}}"], "path": ["api", "transactions"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] }
+          }
+        },
+        {
+          "name": "Filter by Type",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions?type=EXPENSE", "host": ["{{BASE_URL}}"], "path": ["api", "transactions"], "query": [{ "key": "type", "value": "EXPENSE" }] }
+          }
+        },
+        {
+          "name": "Filter by Category",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions?category=groceries", "host": ["{{BASE_URL}}"], "path": ["api", "transactions"], "query": [{ "key": "category", "value": "groceries" }] }
+          }
+        },
+        {
+          "name": "Get Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/{{TRANSACTION_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "{{TRANSACTION_ID}}"] }
+          }
+        },
+        {
+          "name": "Update Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/{{TRANSACTION_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "{{TRANSACTION_ID}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 155.50,\n  \"description\": \"Updated description\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Transaction",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/{{TRANSACTION_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "{{TRANSACTION_ID}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics",
+      "item": [
+        {
+          "name": "Account Balance / Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/stats", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "stats"] }
+          }
+        },
+        {
+          "name": "Stats by Category",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/stats/by-category", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "stats", "by-category"] }
+          }
+        },
+        {
+          "name": "Summary (last 30 days)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/summary?days=30", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "summary"], "query": [{ "key": "days", "value": "30" }] }
+          }
+        },
+        {
+          "name": "Fraud-Flagged Transactions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }],
+            "url": { "raw": "{{BASE_URL}}/api/transactions/fraud", "host": ["{{BASE_URL}}"], "path": ["api", "transactions", "fraud"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fraud Detection (Python)",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": { "method": "GET", "url": { "raw": "{{FRAUD_URL}}/api/health", "host": ["{{FRAUD_URL}}"], "path": ["api", "health"] } }
+        },
+        {
+          "name": "Readiness Check",
+          "request": { "method": "GET", "url": { "raw": "{{FRAUD_URL}}/api/ready", "host": ["{{FRAUD_URL}}"], "path": ["api", "ready"] } }
+        },
+        {
+          "name": "Model Info",
+          "request": { "method": "GET", "url": { "raw": "{{FRAUD_URL}}/api/fraud/models", "host": ["{{FRAUD_URL}}"], "path": ["api", "fraud", "models"] } }
+        }
+      ]
+    }
+  ]
+}

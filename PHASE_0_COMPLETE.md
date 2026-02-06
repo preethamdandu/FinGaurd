@@ -108,11 +108,14 @@ python-fraud-service/
    - Database access
    - Health checks
 
-3. **Terraform** - AWS infrastructure templates (placeholder for Phase 3):
-   - VPC and networking
-   - RDS and DocumentDB
-   - ECS Fargate
-   - API Gateway
+3. **Terraform** - AWS infrastructure (fully implemented):
+   - VPC and networking (public, private, data subnets)
+   - RDS PostgreSQL and DocumentDB
+   - ECS Fargate cluster and services
+   - Application Load Balancer with path-based routing
+   - API Gateway (HTTP API)
+   - CloudWatch logging and alarms
+   - Secrets Manager integration
 
 ### 🔧 Configuration Files
 

@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS users (
     is_verified BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP
+    last_login TIMESTAMP,
+    failed_login_attempts INTEGER DEFAULT 0,
+    account_locked_until TIMESTAMP
 );
 
 -- Transactions table
@@ -30,6 +32,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_fraud_flagged BOOLEAN DEFAULT false,
     fraud_risk_score DECIMAL(5, 4),
+    is_deleted BOOLEAN DEFAULT false,
+    deleted_at TIMESTAMP,
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
