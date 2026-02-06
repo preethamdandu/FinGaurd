@@ -2,10 +2,13 @@ package com.fingaurd.repository;
 
 import com.fingaurd.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -68,4 +71,28 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * Count users by verified status
      */
     long countByIsVerified(Boolean isVerified);
+    
+    /**
+     * Increment failed login attempts (runs in its own transaction so rollback doesn't undo it)
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.failedLoginAttempts = u.failedLoginAttempts + 1 WHERE u.id = :userId")
+    void incrementFailedLoginAttempts(@Param("userId") UUID userId);
+    
+    /**
+     * Lock account until given time
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.accountLockedUntil = :lockedUntil WHERE u.id = :userId")
+    void lockAccount(@Param("userId") UUID userId, @Param("lockedUntil") LocalDateTime lockedUntil);
+    
+    /**
+     * Reset failed login attempts and unlock
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.failedLoginAttempts = 0, u.accountLockedUntil = null WHERE u.id = :userId")
+    void resetFailedLoginAttempts(@Param("userId") UUID userId);
 }
