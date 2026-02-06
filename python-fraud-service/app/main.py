@@ -126,6 +126,22 @@ async def legacy_health():
     return {"status": "ok"}
 
 
+# ----- Audit trail endpoint (receives logs from Java service) -----
+
+@app.post("/api/audit")
+async def receive_audit_log(entry: dict):
+    """
+    Receive and persist audit log entries sent by the Java service.
+    Stores them in the MongoDB audit_logs collection (US-016).
+    """
+    try:
+        if mongodb_client.is_connected and mongodb_client._db is not None:
+            await mongodb_client._db.audit_logs.insert_one(entry)
+    except Exception:
+        pass  # best-effort
+    return {"status": "received"}
+
+
 @app.get("/")
 async def root():
     """Root endpoint."""

@@ -13,21 +13,29 @@ import java.util.UUID;
 @Builder
 public class AuthResponse {
     private String accessToken;
+    private String refreshToken;
     private String tokenType;
     private long expiresIn;
     private UserResponse user;
     private LocalDateTime expiresAt;
     
     /**
-     * Create auth response with user info
+     * Create auth response with access + refresh tokens
      */
-    public static AuthResponse create(String token, long expiresIn, UserResponse user) {
+    public static AuthResponse create(String accessToken, String refreshToken,
+                                       long expiresInSeconds, UserResponse user) {
         return AuthResponse.builder()
-                .accessToken(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .expiresIn(expiresIn)
+                .expiresIn(expiresInSeconds)
                 .user(user)
-                .expiresAt(LocalDateTime.now().plusSeconds(expiresIn))
+                .expiresAt(LocalDateTime.now().plusSeconds(expiresInSeconds))
                 .build();
+    }
+    
+    /** Backward-compatible factory (no refresh token) */
+    public static AuthResponse create(String token, long expiresInSeconds, UserResponse user) {
+        return create(token, null, expiresInSeconds, user);
     }
 }

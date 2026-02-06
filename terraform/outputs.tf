@@ -81,3 +81,15 @@ output "fraud_log_group" {
   description = "CloudWatch log group for fraud service"
   value       = aws_cloudwatch_log_group.fraud_service.name
 }
+
+# ── API Gateway ──────────────────────────────────────────────────────────────
+
+output "api_gateway_url" {
+  description = "URL of the API Gateway"
+  value       = aws_apigatewayv2_api.main.api_endpoint
+}
+
+output "api_gateway_id" {
+  description = "ID of the API Gateway"
+  value       = aws_apigatewayv2_api.main.id
+}

@@ -23,12 +23,15 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
     
+    @Value("${jwt.refresh-expiration}")
+    private long jwtRefreshExpiration;
+    
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
     
     /**
-     * Generate JWT token for user
+     * Generate access token for user
      */
     public String generateToken(UUID userId, String email) {
         Date now = new Date();
@@ -37,10 +40,48 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
+                .claim("type", "access")
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+    
+    /**
+     * Generate refresh token for user (longer-lived)
+     */
+    public String generateRefreshToken(UUID userId, String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtRefreshExpiration);
+        
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("email", email)
+                .claim("type", "refresh")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+    
+    /**
+     * Check if token is a refresh token
+     */
+    public boolean isRefreshToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return "refresh".equals(claims.get("type", String.class));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    public long getRefreshExpirationMs() {
+        return jwtRefreshExpiration;
     }
     
     /**

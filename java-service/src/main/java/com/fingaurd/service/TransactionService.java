@@ -197,11 +197,11 @@ public class TransactionService {
     }
     
     /**
-     * Delete transaction with validation
+     * Soft-delete transaction with validation (US-011)
      */
     @Transactional
     public void deleteTransaction(UUID userId, UUID transactionId) {
-        log.info("Deleting transaction {} for user: {}", transactionId, userId);
+        log.info("Soft-deleting transaction {} for user: {}", transactionId, userId);
         
         Transaction transaction = getTransactionByIdAndUser(transactionId, userId);
         
@@ -210,8 +210,11 @@ public class TransactionService {
             throw new ValidationException("Transaction is too old to delete");
         }
         
-        transactionRepository.delete(transaction);
-        log.info("Transaction deleted successfully: {}", transactionId);
+        // Soft-delete: mark as deleted instead of removing from DB
+        transaction.setIsDeleted(true);
+        transaction.setDeletedAt(LocalDateTime.now());
+        transactionRepository.save(transaction);
+        log.info("Transaction soft-deleted successfully: {}", transactionId);
     }
     
     /**

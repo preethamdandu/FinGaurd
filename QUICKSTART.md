@@ -226,7 +226,7 @@ make clean
 
 ## 📱 API Testing with Postman
 
-1. Import the Postman collection (coming soon in `docs/postman/`)
+1. Import the Postman collection from `docs/postman/FinGaurd.postman_collection.json`
 2. Set environment variables:
    - `BASE_URL`: `http://localhost:8080`
    - `FRAUD_URL`: `http://localhost:8000`
