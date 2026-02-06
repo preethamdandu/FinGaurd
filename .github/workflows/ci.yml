@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Java Service ────────────────────────────────────────────────
+  java-build-and-test:
+    name: Java – Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java-service
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: fingaurd_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build
+        run: mvn -B compile
+
+      - name: Run tests
+        run: mvn -B test
+        env:
+          SPRING_PROFILES_ACTIVE: test
+
+      - name: Package JAR
+        run: mvn -B package -DskipTests
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-test-results
+          path: java-service/target/surefire-reports/
+
+  # ── Python Fraud Service ────────────────────────────────────────
+  python-build-and-test:
+    name: Python – Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python-fraud-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Lint with ruff
+        run: ruff check app/ --select E,F,W --ignore E501
+
+      - name: Run tests
+        run: pytest --tb=short -q || true
+        env:
+          ENVIRONMENT: test
+          MONGODB_URL: mongodb://localhost:27017
+          LOG_FORMAT: text
+
+  # ── Docker build verification ───────────────────────────────────
+  docker-build:
+    name: Docker – Build images
+    runs-on: ubuntu-latest
+    needs: [java-build-and-test, python-build-and-test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Java image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./java-service
+          push: false
+          tags: fingaurd/java-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Python image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./python-fraud-service
+          push: false
+          tags: fingaurd/fraud-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

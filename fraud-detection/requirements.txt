@@ -1,0 +1,7 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+# sklearn stack (optional for future ML rules)
+scikit-learn==1.5.1
+numpy==1.26.4
+scipy==1.11.4

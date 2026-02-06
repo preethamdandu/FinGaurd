@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: fingaurd-java-service
+    plan: free
+    runtime: docker
+    rootDir: java-service
+    autoDeploy: true
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_URL
+        fromSecret: DATABASE_URL
+      - key: DATABASE_USERNAME
+        fromSecret: DATABASE_USERNAME
+      - key: DATABASE_PASSWORD
+        fromSecret: DATABASE_PASSWORD
+      - key: JWT_SECRET
+        fromSecret: JWT_SECRET
+      - key: FRAUD_SERVICE_URL
+        value: http://fingaurd-fraud-service:8000
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+  - type: web
+    name: fingaurd-fraud-service
+    plan: free
+    runtime: docker
+    rootDir: python-fraud-service
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: MONGODB_URL
+        fromSecret: MONGODB_URL
+      - key: MONGODB_DB_NAME
+        value: fingaurd_fraud
+      - key: JAVA_SERVICE_URL
+        value: http://fingaurd-java-service:8080
+      - key: LOG_LEVEL
+        value: INFO
+
+databases:
+  - name: fingaurd-postgres
+    plan: free
+    databaseName: fingaurd_db
+    user: fingaurd_user
