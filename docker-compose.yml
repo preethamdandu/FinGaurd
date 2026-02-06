@@ -98,6 +98,20 @@ services:
       retries: 3
       start_period: 40s
 
+  # ── React Frontend (Nginx) ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fingaurd-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - java-service
+    networks:
+      - fingaurd-network
+    restart: unless-stopped
+
   # ── MongoDB Express (dev only – DB admin UI) ──────────────────────
   mongo-express:
     image: mongo-express:latest

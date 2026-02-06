@@ -56,8 +56,8 @@ FinGaurd follows a microservices architecture pattern:
 
 ```
 ┌─────────────────┐
-│   Client/UI     │
-│  (Future Web)   │
+│  React Frontend │
+│  (port 3000)    │
 └────────┬────────┘
          │
          ▼
@@ -126,6 +126,10 @@ FinGaurd/
 ├── java-service/
 │   ├── src/
 │   ├── pom.xml
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   ├── package.json
 │   └── Dockerfile
 ├── python-fraud-service/
 │   ├── app/
