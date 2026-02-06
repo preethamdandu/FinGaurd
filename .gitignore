@@ -1,0 +1,131 @@
+# General
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.iml
+.project
+.classpath
+.settings/
+
+# Java
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+mvnw
+mvnw.cmd
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# Note: terraform.tfvars in environments/ are tracked as examples
+
+# Docker
+.dockerignore
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# ML Models (track with Git LFS if needed)
+*.pkl
+*.h5
+*.pt
+*.pth
+models/*.pkl
+!models/.gitkeep
+
+# OS
+Thumbs.db
+*.tmp
+*~
+
+# Logs
+logs/
+*.log
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.cert
+*.crt
+
+# Backup files
+*.bak
+*.backup
+*.old
+

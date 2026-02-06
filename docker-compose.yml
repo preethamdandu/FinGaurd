@@ -1,0 +1,144 @@
+##
+## FinGaurd – Local Development Docker Compose
+##
+## Usage:
+##   docker compose up -d               # core services
+##   docker compose --profile dev up -d  # core + admin UIs (pgAdmin, Mongo Express)
+##
+
+version: "3.9"
+
+services:
+  # ── PostgreSQL (primary relational DB) ────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: fingaurd-postgres
+    environment:
+      POSTGRES_DB: fingaurd_db
+      POSTGRES_USER: fingaurd_user
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fingaurd-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fingaurd_user -d fingaurd_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MongoDB (fraud analysis logs & audit trail) ───────────────────
+  mongodb:
+    image: mongo:7-jammy
+    container_name: fingaurd-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: fingaurd_fraud
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - fingaurd-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Java Core Service (Spring Boot) ───────────────────────────────
+  java-service:
+    build:
+      context: ./java-service
+      dockerfile: Dockerfile
+    container_name: fingaurd-java-service
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fingaurd_db
+      SPRING_DATASOURCE_USERNAME: fingaurd_user
+      SPRING_DATASOURCE_PASSWORD: changeme
+      JWT_SECRET: your-256-bit-secret-key-change-this-in-production
+      FRAUD_SERVICE_URL: http://python-fraud-service:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      python-fraud-service:
+        condition: service_healthy
+    networks:
+      - fingaurd-network
+    restart: unless-stopped
+
+  # ── Python Fraud Detection Service (FastAPI) ──────────────────────
+  python-fraud-service:
+    build:
+      context: ./python-fraud-service
+      dockerfile: Dockerfile
+    container_name: fingaurd-fraud-service
+    environment:
+      ENVIRONMENT: development
+      MONGODB_URL: mongodb://mongodb:27017
+      MONGODB_DB_NAME: fingaurd_fraud
+      JAVA_SERVICE_URL: http://java-service:8080
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - fingaurd-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── MongoDB Express (dev only – DB admin UI) ──────────────────────
+  mongo-express:
+    image: mongo-express:latest
+    container_name: fingaurd-mongo-express
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - fingaurd-network
+    profiles:
+      - dev
+
+  # ── pgAdmin (dev only – Postgres admin UI) ────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fingaurd-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@fingaurd.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - fingaurd-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+
+networks:
+  fingaurd-network:
+    driver: bridge
