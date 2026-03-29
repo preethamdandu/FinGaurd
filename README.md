@@ -143,7 +143,7 @@ Step-by-step environment setup, profiles, and database initialization are docume
 
 ## Configuration
 
-- **Java**: `application.yml` / env vars for datasource, JWT secret, fraud service URL.
+- **Java**: `application.yml` / env vars for datasource, JWT secret, and **`FRAUD_SERVICE_URL`** (must point at the Python service from Docker or k8s — e.g. `http://python-fraud-service:8000` in Compose — otherwise the default `localhost:8000` only works on a single host).
 - **Python**: Pydantic settings (`app/core/config.py`) — MongoDB URI, model paths, thresholds.
 - **Frontend**: `VITE_*` if used; dev server proxies `/api` to the backend (see Vite config).
 

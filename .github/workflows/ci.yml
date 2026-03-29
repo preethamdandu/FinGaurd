@@ -15,20 +15,6 @@ jobs:
       run:
         working-directory: java-service
 
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: fingaurd_test
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
@@ -84,17 +70,44 @@ jobs:
         run: ruff check app/ --select E,F,W --ignore E501
 
       - name: Run tests
-        run: pytest --tb=short -q || true
+        run: pytest --tb=short -q
         env:
           ENVIRONMENT: test
           MONGODB_URL: mongodb://localhost:27017
           LOG_FORMAT: text
 
+  # ── Frontend ─────────────────────────────────────────────────────
+  frontend-lint-build:
+    name: Frontend – Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
   # ── Docker build verification ───────────────────────────────────
   docker-build:
     name: Docker – Build images
     runs-on: ubuntu-latest
-    needs: [java-build-and-test, python-build-and-test]
+    needs: [java-build-and-test, python-build-and-test, frontend-lint-build]
 
     steps:
       - uses: actions/checkout@v4
