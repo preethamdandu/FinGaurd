@@ -1,198 +1,191 @@
-# FinGaurd 🛡️
+# FinGaurd
 
-A cloud-native financial management and fraud detection system built with microservices architecture.
-
-## 🎯 Project Overview
-
-FinGaurd is a comprehensive financial management platform that combines transaction tracking with intelligent fraud detection. The system leverages a microservices architecture deployed on AWS, utilizing both Java and Python services to deliver secure, scalable financial operations.
-
-## 🚀 MVP Features
-
-### Core Functionalities
-
-1. **User Management**
-   - Secure user registration and authentication
-   - JWT-based authorization
-   - Profile management
-
-2. **Transaction Management**
-   - Record financial transactions (income/expenses)
-   - View transaction history with filtering and pagination
-   - Transaction categorization
-   - Real-time balance tracking
-
-3. **Fraud Detection**
-   - Automated anomaly detection on transactions
-   - Risk scoring system
-   - Fraud alerts and notifications
-
-4. **Audit & Logging**
-   - Comprehensive activity logging
-   - Audit trails for compliance
-
-## 📋 User Stories
-
-### Authentication & Authorization
-- **US-001**: As a user, I want to create an account with email and password so that I can access the system securely.
-- **US-002**: As a user, I want to log in securely with my credentials so that I can access my financial data.
-- **US-003**: As a user, I want to log out of my account so that my data remains secure.
-
-### Transaction Management
-- **US-004**: As a user, I want to record a new transaction (income or expense) so that I can track my finances.
-- **US-005**: As a user, I want to view my transaction history so that I can see my spending patterns.
-- **US-006**: As a user, I want to filter transactions by date, category, or amount so that I can analyze specific financial activities.
-- **US-007**: As a user, I want to see my current balance so that I know my financial status.
-
-### Fraud Detection
-- **US-008**: As a user, I want the system to automatically detect suspicious transactions so that I can be alerted to potential fraud.
-- **US-009**: As a user, I want to receive notifications about flagged transactions so that I can take immediate action.
-
-### Reporting & Analytics
-- **US-010**: As a user, I want to view spending reports by category so that I can understand my financial habits.
-
-## 🏗️ Architecture
-
-FinGaurd follows a microservices architecture pattern:
-
-```
-┌─────────────────┐
-│  React Frontend │
-│  (port 3000)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  AWS API        │
-│  Gateway        │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│   Java Core Service (Spring Boot)       │
-│   - User Management                     │
-│   - Transaction Management              │
-│   - Authentication/Authorization        │
-└──────┬──────────────────────┬───────────┘
-       │                      │
-       ▼                      ▼
-┌──────────────┐    ┌──────────────────┐
-│  PostgreSQL  │    │  Python Fraud    │
-│   Database   │    │  Detection       │
-│              │    │  Service         │
-└──────────────┘    └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │    MongoDB       │
-                    │  (Logs & Audit)  │
-                    └──────────────────┘
-```
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design.
-
-## 🛠️ Technology Stack
-
-### Backend Services
-- **Java Service**: Spring Boot 3.x, Spring Security, Spring Data JPA
-- **Python Service**: FastAPI, Scikit-learn (fraud detection ML)
-
-### Databases
-- **PostgreSQL**: Primary relational database for users and transactions
-- **MongoDB**: Document store for logs and audit trails
-
-### Infrastructure
-- **AWS Services**: API Gateway, ECS/Fargate, RDS, DocumentDB, CloudWatch
-- **Containerization**: Docker
-- **Infrastructure as Code**: Terraform
-- **CI/CD**: GitHub Actions
-
-### Development Tools
-- Maven/Gradle (Java build tool)
-- Poetry/pip (Python dependency management)
-- Docker Desktop
-- Postman (API testing)
-
-## 📁 Project Structure
-
-```
-FinGaurd/
-├── README.md
-├── ARCHITECTURE.md
-├── SETUP.md
-├── USER_STORIES.md
-├── docs/
-│   ├── api/API_REFERENCE.md
-│   └── deployment/DEPLOYMENT_GUIDE.md
-├── java-service/
-│   ├── src/
-│   ├── pom.xml
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── Dockerfile
-├── python-fraud-service/
-│   ├── app/
-│   ├── requirements.txt
-│   └── Dockerfile
-├── terraform/
-│   ├── modules/
-│   ├── environments/
-│   └── main.tf
-└── .github/
-    └── workflows/
-        ├── ci.yml
-        └── deploy.yml
-```
-
-## 🚦 Development Roadmap
-
-### Phase 0: Foundation & System Design ✅
-- Define MVP features and user stories
-- Create architectural blueprint
-- Set up development environment
-
-### Phase 1: Local Development ✅
-- Java service: Auth, user management, full transaction CRUD
-- Transaction filtering, statistics, category analytics
-- Python fraud detection: rule-based + ML (Isolation Forest)
-- MongoDB audit logging, health checks
-
-### Phase 2: Containerization ✅
-- Multi-stage Dockerfiles (Java & Python)
-- Docker Compose with PostgreSQL, MongoDB, both services
-- Health checks, inter-service communication
-
-### Phase 3: Cloud Infrastructure ✅
-- Full Terraform config: VPC, subnets, RDS, DocumentDB, ECS Fargate, ALB
-- CloudWatch logging and alerting
-- Security groups, IAM roles, Secrets Manager
-- Environment configs (dev / prod)
-
-### Phase 4: CI/CD & Monitoring ✅
-- GitHub Actions CI: build, test, lint, Docker verify
-- GitHub Actions Deploy: GHCR push + Render webhooks
-- Render.com deployment config
-
-### Phase 5: Polish & Production ✅
-- API reference documentation
-- Deployment guide (Docker / Render / AWS)
-- Consolidated Docker configs
-- Security best practices documented
-
-## 🎯 Getting Started
-
-To set up your development environment, please follow the instructions in [SETUP.md](./SETUP.md).
-
-## 📝 License
-
-This project is part of a learning initiative for cloud-native application development.
-
-## 👥 Contributing
-
-This is a personal learning project. Feel free to fork and adapt for your own learning journey!
+**FinGaurd** is a full-stack financial management platform with integrated fraud detection: users authenticate against a Spring Boot core service, manage transactions in PostgreSQL, and route high-risk activity through a Python FastAPI fraud service backed by MongoDB for analysis and audit trails. Infrastructure is defined as code (Terraform) and validated in CI (GitHub Actions).
 
 ---
 
-**Status**: All Phases Complete ✅
+## Table of contents
 
+- [Why this exists](#why-this-exists)
+- [System architecture](#system-architecture)
+- [Technology choices](#technology-choices)
+- [Repository layout](#repository-layout)
+- [Prerequisites](#prerequisites)
+- [Run locally](#run-locally)
+- [Development workflow](#development-workflow)
+- [Configuration](#configuration)
+- [APIs and documentation](#apis-and-documentation)
+- [CI/CD](#cicd)
+- [Security notes](#security-notes)
+- [Roadmap status](#roadmap-status)
+- [License](#license)
+
+---
+
+## Why this exists
+
+The project demonstrates end-to-end ownership of a **multi-service product**: relational data and business rules in Java, ML-assisted anomaly scoring in Python, a React SPA for operators, and cloud-ready packaging (Docker, Terraform, CI). It is suitable as a portfolio piece or as a baseline to fork for regulated fintech experiments.
+
+**Core capabilities**
+
+| Area | What you get |
+|------|----------------|
+| Identity | Signup, login, JWT access + refresh, profile updates, account lockout after failed attempts |
+| Money | CRUD transactions, filters, pagination, stats, category analytics, fraud-flagged views |
+| Fraud | Rule + model-based scoring, audit persistence, health endpoints for orchestration |
+| Ops | Compose for local stacks, Terraform for AWS-shaped environments, GitHub Actions for build quality |
+
+---
+
+## System architecture
+
+Clients hit the **React** app (Vite dev server or static container). The UI talks to the **Java API** (`/api/*`) which owns users and transactions in **PostgreSQL**. For fraud scoring and audit, the Java service calls the **Python** service; **MongoDB** stores fraud analysis and audit payloads.
+
+```mermaid
+flowchart LR
+  subgraph clients [Clients]
+    Web[React SPA]
+  end
+  subgraph core [Core API]
+    Java[Spring Boot :8080]
+    PG[(PostgreSQL)]
+  end
+  subgraph fraud [Fraud plane]
+    Py[FastAPI :8000]
+    MG[(MongoDB)]
+  end
+  Web -->|HTTPS /api| Java
+  Java --> PG
+  Java -->|HTTP| Py
+  Py --> MG
+```
+
+For a deeper design narrative, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+---
+
+## Technology choices
+
+| Layer | Stack |
+|-------|--------|
+| Web UI | React 19, Vite 7, Tailwind CSS 4, React Router, Recharts |
+| Core API | Java 21, Spring Boot 3, Spring Security, JWT, Spring Data JPA |
+| Fraud API | Python 3.11+, FastAPI, scikit-learn (Isolation Forest), Pydantic |
+| Data | PostgreSQL 15 (users, transactions), MongoDB 7 (fraud/audit documents) |
+| Infra | Docker, Docker Compose, Terraform (VPC, RDS, ECS, ALB, etc.) |
+| Quality gates | Maven tests, pytest, Ruff, ESLint, GitHub Actions |
+
+---
+
+## Repository layout
+
+```
+FinGaurd/
+├── .github/workflows/     # CI (build, test, lint) and deploy workflows
+├── docs/                  # API reference, Postman collection, deployment guides
+├── frontend/              # React SPA (Vite + Tailwind)
+├── java-service/          # Spring Boot core API
+├── python-fraud-service/  # FastAPI fraud detection + MongoDB client
+├── terraform/             # AWS-style modules and environment tfvars
+├── compose.yaml           # Local multi-service stack (recommended entry point)
+├── ARCHITECTURE.md
+├── SETUP.md
+└── README.md              # This file
+```
+
+Service-specific READMEs live under `java-service/`, `python-fraud-service/`, `frontend/`, and `terraform/`.
+
+---
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** (recommended path), or
+- **Java 21** + **Maven 3.9+**, **Node.js 20+**, **Python 3.11+**, and local PostgreSQL + MongoDB if you run services without Compose.
+
+---
+
+## Run locally
+
+### Option A: Docker Compose (recommended)
+
+From the repository root:
+
+```bash
+docker compose up -d
+```
+
+Typical ports (see `compose.yaml` for exact mapping):
+
+| Service | Port |
+|---------|------|
+| Java API | 8080 |
+| Python fraud API | 8000 |
+| PostgreSQL | 5432 |
+| MongoDB | 27017 |
+
+The frontend can be run against the Java API via Vite proxy (see `frontend/vite.config.js`) or included in Compose if your profile defines it.
+
+### Option B: Manual / hybrid
+
+Step-by-step environment setup, profiles, and database initialization are documented in [SETUP.md](./SETUP.md).
+
+---
+
+## Development workflow
+
+1. **Branch from `main`** for feature work; keep commits focused and message them clearly.
+2. **Java**: `cd java-service && mvn -B test` (uses test profile / H2 as configured).
+3. **Python**: `cd python-fraud-service && pip install -r requirements.txt && ruff check app/ && pytest`.
+4. **Frontend**: `cd frontend && npm ci && npm run build && npm run lint`.
+5. **Integration**: Exercise the stack via Compose and the Postman collection under `docs/postman/`.
+
+---
+
+## Configuration
+
+- **Java**: `application.yml` / env vars for datasource, JWT secret, fraud service URL.
+- **Python**: Pydantic settings (`app/core/config.py`) — MongoDB URI, model paths, thresholds.
+- **Frontend**: `VITE_*` if used; dev server proxies `/api` to the backend (see Vite config).
+
+Never commit production secrets. Replace Compose defaults (`changeme`, placeholder JWT secrets) before any real deployment.
+
+---
+
+## APIs and documentation
+
+- [docs/api/API_REFERENCE.md](./docs/api/API_REFERENCE.md) — endpoint-oriented reference.
+- [docs/deployment/DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md) — deployment patterns.
+- `docs/postman/FinGaurd.postman_collection.json` — runnable requests.
+
+---
+
+## CI/CD
+
+- **`.github/workflows/ci.yml`**: JDK 21 + Maven for the Java service; Python 3.11 + Ruff + pytest for the fraud service; Docker image builds after both succeed.
+- **`.github/workflows/deploy.yml`**: Image build/push and deployment hooks (e.g. Render) as configured in your fork.
+
+Align local JDK with CI (`21`) to avoid compiler or bytecode mismatches.
+
+---
+
+## Security notes
+
+- JWT signing keys and database passwords must be rotated for non-local use.
+- The fraud and core services should sit behind TLS and network policies in production.
+- Account lockout and refresh-token flows are implemented in the Java service; review session expiry and refresh policies for your threat model.
+
+---
+
+## Roadmap status
+
+Phases **0–5** (design, local services, containerization, Terraform, CI/CD, documentation) are implemented in this repository. Treat cloud costs and compliance (PCI, SOC2, etc.) as **out of scope** unless you extend the design explicitly.
+
+---
+
+## License
+
+This project is maintained for learning and demonstration. Fork and adapt under terms that fit your use case; there is no warranty implied.
+
+---
+
+**Maintainer:** [preethamdandu](https://github.com/preethamdandu) · **Repository:** [FinGaurd](https://github.com/preethamdandu/FinGaurd)
