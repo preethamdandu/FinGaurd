@@ -27,7 +27,7 @@ jwt:
 fraud-detection:
   service:
     enabled: true  # Enable fraud service for testing
-    url: ${FRAUD_DETECTION_SERVICE_URL:http://localhost:8000}
+    url: ${FRAUD_SERVICE_URL:http://localhost:8000}
     timeoutMs: 2000
 
 logging:

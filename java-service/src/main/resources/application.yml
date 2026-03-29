@@ -46,10 +46,11 @@ jwt:
   refresh-expiration: 604800000  # 7 days in milliseconds
 
 # Fraud Detection Service Configuration
+# FRAUD_SERVICE_URL overrides base URL (required in Docker so Java reaches the Python service, not localhost).
 fraud-detection:
   service:
-    url: http://localhost:8000
-    timeout: 5000  # milliseconds
+    url: ${FRAUD_SERVICE_URL:http://localhost:8000}
+    timeoutMs: 5000
     enabled: true
 
 # Logging Configuration
