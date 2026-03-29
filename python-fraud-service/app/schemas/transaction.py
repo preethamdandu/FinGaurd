@@ -19,7 +19,7 @@ class TransactionAnalysisRequest(BaseModel):
     category: str = Field(..., description="Transaction category")
     transaction_date: datetime = Field(..., description="Transaction timestamp")
     description: Optional[str] = Field(None, description="Transaction description")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -52,7 +52,7 @@ class TransactionAnalysisResponse(BaseModel):
     confidence: float = Field(..., ge=0, le=1, description="Model confidence score")
     model_version: str = Field(..., description="Version of ML model used")
     analyzed_at: datetime = Field(default_factory=_utc_now)
-    
+
     class Config:
         json_schema_extra = {
             "example": {

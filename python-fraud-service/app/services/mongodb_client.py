@@ -22,7 +22,7 @@ except ImportError:
 class MongoDBClient:
     """
     Async MongoDB client for fraud detection audit logging.
-    
+
     Collections:
     - fraud_analyses: Stores every fraud analysis result
     - fraud_alerts: Stores high-risk transaction alerts
@@ -75,7 +75,7 @@ class MongoDBClient:
     async def log_analysis(self, analysis_result: Dict[str, Any]) -> Optional[str]:
         """
         Persist a fraud analysis result to MongoDB.
-        
+
         Returns the inserted document ID or None if logging fails.
         """
         if not self._connected or self._db is None:

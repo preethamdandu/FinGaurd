@@ -28,7 +28,7 @@ except ImportError:
 class ModelManager:
     """
     Manages the Isolation Forest model for anomaly-based fraud detection.
-    
+
     Features used:
     - amount: Transaction amount
     - hour_of_day: Hour of the transaction (0-23)
@@ -97,7 +97,7 @@ class ModelManager:
     def predict(self, features: Dict[str, float]) -> Optional[float]:
         """
         Predict anomaly score for a single transaction.
-        
+
         Returns a score between 0 and 1 where higher = more anomalous,
         or None if the model is not available.
         """

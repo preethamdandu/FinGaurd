@@ -97,7 +97,7 @@ class LegacyFraudResponse(BaseModel):
 async def legacy_detect(transaction: LegacyTransaction):
     """
     Legacy fraud detection endpoint.
-    
+
     Maintained for backward compatibility with the Java core service
     which calls POST /detect with {user_id, amount, timestamp}.
     """
