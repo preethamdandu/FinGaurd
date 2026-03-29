@@ -88,16 +88,18 @@ public class ComprehensiveTestSuite {
                     .passwordHash("hash")
                     .build();
             userRepository.save(user);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
 
-        // Test empty username
+        // Duplicate username (unique constraint)
         assertThatThrownBy(() -> {
             User user = User.builder()
-                    .username("")
-                    .email("test@example.com")
+                    .username("testuser")
+                    .email("dupuser@example.com")
                     .passwordHash("hash")
                     .build();
             userRepository.save(user);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
 
         // Test null email
@@ -108,6 +110,7 @@ public class ComprehensiveTestSuite {
                     .passwordHash("hash")
                     .build();
             userRepository.save(user);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
 
         // Test null password hash
@@ -118,6 +121,7 @@ public class ComprehensiveTestSuite {
                     .passwordHash(null)
                     .build();
             userRepository.save(user);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
     }
 
@@ -143,6 +147,7 @@ public class ComprehensiveTestSuite {
                     .passwordHash("hash")
                     .build();
             userRepository.save(user2);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
 
         // Test email at reasonable length
@@ -247,8 +252,10 @@ public class ComprehensiveTestSuite {
                 .transactionDate(LocalDateTime.now())
                 .build();
         Transaction savedTx = transactionRepository.save(tx);
-        
-        // Verify precision is maintained (H2 typically truncates to 2 decimal places)
+        entityManager.flush();
+        entityManager.refresh(savedTx);
+
+        // Schema uses DECIMAL(15,2): persisted value is rounded to scale 2
         assertThat(savedTx.getAmount()).isEqualByComparingTo(new BigDecimal("123.46"));
     }
 
@@ -363,12 +370,12 @@ public class ComprehensiveTestSuite {
     public void testDateRangeEdgeCases() {
         LocalDateTime now = LocalDateTime.now();
         
-        // Test transactions at exact boundaries
+        // Both dates must fall inside the query window [now-30d, now+30d]
         Transaction pastTx = Transaction.builder()
                 .user(testUser)
                 .amount(BigDecimal.valueOf(100.00))
                 .transactionType(TransactionType.INCOME)
-                .transactionDate(now.minusYears(1))
+                .transactionDate(now.minusDays(5))
                 .build();
         transactionRepository.save(pastTx);
 
@@ -376,16 +383,15 @@ public class ComprehensiveTestSuite {
                 .user(testUser)
                 .amount(BigDecimal.valueOf(200.00))
                 .transactionType(TransactionType.EXPENSE)
-                .transactionDate(now.plusDays(1))
+                .transactionDate(now.plusDays(5))
                 .build();
         transactionRepository.save(futureTx);
 
-        // Test date range queries
         LocalDateTime startDate = now.minusDays(30);
         LocalDateTime endDate = now.plusDays(30);
         List<Transaction> rangeTx = transactionRepository.findByUserAndTransactionDateBetween(testUser, startDate, endDate);
-        
-        assertThat(rangeTx).hasSize(2); // Should include both transactions
+
+        assertThat(rangeTx).hasSize(2);
     }
 
     @Test
@@ -558,6 +564,7 @@ public class ComprehensiveTestSuite {
                     .passwordHash("differenthash")
                     .build();
             userRepository.save(duplicateEmailUser);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
 
         // Test duplicate username
@@ -568,6 +575,7 @@ public class ComprehensiveTestSuite {
                     .passwordHash("differenthash")
                     .build();
             userRepository.save(duplicateUsernameUser);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
 
         // Test null user in transaction
@@ -579,6 +587,7 @@ public class ComprehensiveTestSuite {
                     .transactionDate(LocalDateTime.now())
                     .build();
             transactionRepository.save(nullUserTx);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
     }
 

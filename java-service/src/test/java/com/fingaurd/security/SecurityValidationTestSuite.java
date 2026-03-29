@@ -218,26 +218,19 @@ public class SecurityValidationTestSuite {
     @Test
     @DisplayName("🔒 SECURITY: Input Validation and Sanitization")
     public void testInputValidationAndSanitization() {
-        // Test extremely long input
+        // Extremely long firstName: must fail or truncate; DB column rejects oversized values
         String longString = "a".repeat(10000);
-        
-        User longInputUser = User.builder()
-                .username("longinputuser")
-                .email("longinput@example.com")
-                .passwordHash("hash")
-                .firstName(longString)
-                .build();
-
-        // This should either be truncated or rejected
-        try {
+        assertThatThrownBy(() -> {
+            User longInputUser = User.builder()
+                    .username("longinputuser")
+                    .email("longinput@example.com")
+                    .passwordHash("hash")
+                    .firstName(longString)
+                    .build();
             userRepository.save(longInputUser);
-            User savedUser = userRepository.findByUsername("longinputuser").orElseThrow();
-            // If saved, verify it's truncated
-            assertThat(savedUser.getFirstName().length()).isLessThan(10000);
-        } catch (Exception e) {
-            // If rejected, that's also acceptable
-            assertThat(e).isInstanceOf(Exception.class);
-        }
+            entityManager.flush();
+        }).isInstanceOf(Exception.class);
+        entityManager.clear();
 
         // Test special characters that might cause issues
         String specialChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~";
@@ -318,6 +311,7 @@ public class SecurityValidationTestSuite {
                     .transactionDate(LocalDateTime.now())
                     .build();
             transactionRepository.save(invalidTx);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
     }
 
@@ -345,7 +339,7 @@ public class SecurityValidationTestSuite {
             assertThat(savedTx.getTransactionDate()).isNotNull();
         }
 
-        // Test null date (should fail)
+        // Test null date (should fail at flush — DB / Hibernate not-null)
         assertThatThrownBy(() -> {
             Transaction nullDateTx = Transaction.builder()
                     .user(testUser)
@@ -354,6 +348,7 @@ public class SecurityValidationTestSuite {
                     .transactionDate(null)
                     .build();
             transactionRepository.save(nullDateTx);
+            entityManager.flush();
         }).isInstanceOf(Exception.class);
     }
 
