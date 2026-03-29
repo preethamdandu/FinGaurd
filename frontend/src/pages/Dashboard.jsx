@@ -16,7 +16,7 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <div className="flex items-center gap-3 mb-3">
-        <div className={`p-2 rounded-lg ${colors[color]}`}><Icon size={20} /></div>
+        <div className={`p-2 rounded-lg ${colors[color] || 'bg-gray-50 text-gray-600'}`}><Icon size={20} /></div>
         <span className="text-sm text-gray-500">{label}</span>
       </div>
       <p className="text-2xl font-bold text-gray-900">{value}</p>

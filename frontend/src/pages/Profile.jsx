@@ -35,7 +35,7 @@ export default function Profile() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || 'Update failed');
     } finally {
       setSaving(false);
     }

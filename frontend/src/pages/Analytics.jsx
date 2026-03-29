@@ -137,7 +137,7 @@ export default function Analytics() {
           <h2 className="font-semibold text-gray-900 mb-3">Top Categories</h2>
           <div className="flex flex-wrap gap-2">
             {summary.topCategories.map((cat, i) => (
-              <span key={cat} className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-medium">
+              <span key={`${cat}-${i}`} className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-medium">
                 #{i + 1} {cat}
               </span>
             ))}

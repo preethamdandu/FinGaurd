@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { transactions as api } from '../services/api';
-import { Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CATEGORIES = [
   'groceries', 'dining', 'transportation', 'utilities', 'entertainment',
@@ -11,13 +11,28 @@ const fmt = (n) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
 
 function Modal({ open, onClose, title, children }) {
+  useEffect(() => {
+    if (!open) return;
+    const handleEscape = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          <h3 id="modal-title" className="text-lg font-semibold text-gray-900">{title}</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+            <X size={20} />
+          </button>
         </div>
         {children}
       </div>
@@ -35,11 +50,13 @@ export default function Transactions() {
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ amount: '', transactionType: 'EXPENSE', category: 'other', description: '' });
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
   const filterJustChanged = useRef(false);
 
   const load = (p = page) => {
     setLoading(true);
+    setLoadError('');
     const params = new URLSearchParams({ page: p, size: 15, sortBy: 'transactionDate', sortDir: 'desc' });
     if (filterType) params.set('type', filterType);
     if (filterCat) params.set('category', filterCat);
@@ -48,7 +65,7 @@ export default function Transactions() {
         setTxns(data.content || []);
         setTotalPages(data.totalPages || 0);
       })
-      .catch(() => {})
+      .catch(() => setLoadError('Failed to load transactions.'))
       .finally(() => setLoading(false));
   };
 
@@ -95,13 +112,19 @@ export default function Transactions() {
       setModalOpen(false);
       load();
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || 'Save failed');
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this transaction?')) return;
-    try { await api.delete(id); load(); } catch {}
+    setError('');
+    try {
+      await api.delete(id);
+      load();
+    } catch (err) {
+      setError(err?.message || 'Failed to delete transaction');
+    }
   };
 
   return (
@@ -109,12 +132,25 @@ export default function Transactions() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
         <button
+          type="button"
           onClick={openCreate}
           className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
         >
           <Plus size={16} /> New Transaction
         </button>
       </div>
+
+      {error && !modalOpen && (
+        <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>
+      )}
+      {loadError && (
+        <div className="bg-amber-50 text-amber-800 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{loadError}</span>
+          <button type="button" onClick={() => load(page)} className="text-amber-700 font-medium hover:underline">
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
@@ -188,8 +224,8 @@ export default function Transactions() {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => openEdit(tx)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition"><Pencil size={14} /></button>
-                        <button onClick={() => handleDelete(tx.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition"><Trash2 size={14} /></button>
+                        <button type="button" onClick={() => openEdit(tx)} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition" aria-label="Edit"><Pencil size={14} /></button>
+                        <button type="button" onClick={() => handleDelete(tx.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition" aria-label="Delete"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -204,8 +240,8 @@ export default function Transactions() {
           <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
             <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
             <div className="flex gap-1">
-              <button disabled={page === 0} onClick={() => setPage(page - 1)} className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition"><ChevronLeft size={16} /></button>
-              <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition"><ChevronRight size={16} /></button>
+              <button type="button" disabled={page === 0} onClick={() => setPage(page - 1)} className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition" aria-label="Previous page"><ChevronLeft size={16} /></button>
+              <button type="button" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-gray-50 transition" aria-label="Next page"><ChevronRight size={16} /></button>
             </div>
           </div>
         )}
