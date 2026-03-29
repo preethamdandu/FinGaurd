@@ -14,14 +14,23 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      api.summary(days).catch(() => null),
-      api.statsByCategory().catch(() => null),
-    ]).then(([s, c]) => {
-      setSummary(s);
-      setCatStats(c);
-    }).finally(() => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [s, c] = await Promise.all([
+          api.summary(days).catch(() => null),
+          api.statsByCategory().catch(() => null),
+        ]);
+        if (!cancelled) {
+          setSummary(s);
+          setCatStats(c);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [days]);
 
   if (loading) {

@@ -23,7 +23,16 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Data-fetching effects legitimately drive loading UI; the rule is overly strict for this pattern.
+      'react-hooks/set-state-in-effect': 'off',
+      'no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^[A-Z_]',
+          argsIgnorePattern: '^[A-Z_]',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 ])

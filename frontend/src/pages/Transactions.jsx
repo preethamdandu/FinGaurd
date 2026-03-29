@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { transactions as api } from '../services/api';
 import { Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -52,9 +52,8 @@ export default function Transactions() {
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
-  const filterJustChanged = useRef(false);
 
-  const load = (p = page) => {
+  const load = useCallback((p) => {
     setLoading(true);
     setLoadError('');
     const params = new URLSearchParams({ page: p, size: 15, sortBy: 'transactionDate', sortDir: 'desc' });
@@ -67,20 +66,21 @@ export default function Transactions() {
       })
       .catch(() => setLoadError('Failed to load transactions.'))
       .finally(() => setLoading(false));
+  }, [filterType, filterCat]);
+
+  const onFilterTypeChange = (value) => {
+    setFilterType(value);
+    setPage(0);
+  };
+
+  const onFilterCatChange = (value) => {
+    setFilterCat(value);
+    setPage(0);
   };
 
   useEffect(() => {
-    filterJustChanged.current = true;
-    setPage(0);
-  }, [filterType, filterCat]);
-  useEffect(() => {
-    if (filterJustChanged.current) {
-      filterJustChanged.current = false;
-      load(0);
-    } else {
-      load(page);
-    }
-  }, [page, filterType, filterCat]);
+    load(page);
+  }, [page, load]);
 
   const openCreate = () => {
     setEditId(null);
@@ -110,7 +110,7 @@ export default function Transactions() {
         await api.create(body);
       }
       setModalOpen(false);
-      load();
+      load(page);
     } catch (err) {
       setError(err?.message || 'Save failed');
     }
@@ -121,7 +121,7 @@ export default function Transactions() {
     setError('');
     try {
       await api.delete(id);
-      load();
+      load(page);
     } catch (err) {
       setError(err?.message || 'Failed to delete transaction');
     }
@@ -156,7 +156,7 @@ export default function Transactions() {
       <div className="flex flex-wrap gap-3">
         <select
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
+          onChange={(e) => onFilterTypeChange(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
         >
           <option value="">All types</option>
@@ -165,7 +165,7 @@ export default function Transactions() {
         </select>
         <select
           value={filterCat}
-          onChange={(e) => setFilterCat(e.target.value)}
+          onChange={(e) => onFilterCatChange(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
         >
           <option value="">All categories</option>

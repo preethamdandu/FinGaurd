@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { users } from '../services/api';
 import { User, Save, CheckCircle } from 'lucide-react';
 
